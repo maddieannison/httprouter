@@ -9,8 +9,11 @@ import (
 	"net/http"
 	"reflect"
 	"regexp"
+	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // func printChildren(n *node, prefix string) {
@@ -214,51 +217,124 @@ func testRoutes(t *testing.T, routes []testRoute) {
 				t.Errorf("no panic for conflicting route '%s'", route.path)
 			}
 		} else if recv != nil {
-			t.Errorf("unexpected panic for route '%s': %v", route.path, recv)
+			t.Errorf("unexpected panic for route '%s': %+v, %s", route.path, recv, panicCaller())
+			tree.Printtree()
 		}
 	}
 
 	// printChildren(tree, "")
 }
 
+func panicCaller() string {
+	var name, file string
+	var line int
+	var pc [16]uintptr
+
+	n := runtime.Callers(3, pc[:])
+	for _, pc := range pc[:n] {
+		fn := runtime.FuncForPC(pc)
+		if fn == nil {
+			continue
+		}
+		file, line = fn.FileLine(pc)
+		name = fn.Name()
+		if !strings.HasPrefix(name, "runtime.") {
+			break
+		}
+	}
+
+	switch {
+	case name != "":
+		return fmt.Sprintf("%v:%v", name, line)
+	case file != "":
+		return fmt.Sprintf("%v:%v", file, line)
+	}
+
+	return fmt.Sprintf("pc:%x", pc)
+}
+
 func TestTreeWildcardConflict(t *testing.T) {
 	routes := []testRoute{
 		{"/cmd/:tool/:sub", false},
-		{"/cmd/vet", true},
+		{"/cmd/vet", false},
+		{"/foo/bar", false},
+		{"/foo/:name", false},
+		{"/foo/:names", true},
+		{"/cmd/*path", true},
+		{"/cmd/:badvar", true},
+		{"/cmd/:tool/names", false},
+		{"/cmd/:tool/:badsub/details", true},
 		{"/src/*filepath", false},
+		{"/src/:file", true},
+		{"/src/static.json", true},
 		{"/src/*filepathx", true},
 		{"/src/", true},
+		{"/src/foo/bar", true},
 		{"/src1/", false},
 		{"/src1/*filepath", true},
 		{"/src2*filepath", true},
+		{"/src2/*filepath", false},
 		{"/search/:query", false},
-		{"/search/invalid", true},
+		{"/search/valid", false},
 		{"/user_:name", false},
-		{"/user_x", true},
+		{"/user_x", false},
 		{"/user_:name", false},
 		{"/id:id", false},
-		{"/id/:id", true},
+		{"/id/:id", false},
+		{"/sso/url_slug", false},
+		{"/sso/:url_slug", false},
 	}
 	testRoutes(t, routes)
+}
+
+func TestTest(t *testing.T) {
+	// routes := []testRoute{
+	// 	{"/sso/url_slug", false},
+	// 	{"/sso/:url_slug", false},
+	// }
+	tree := &node{}
+	tree.addRoute("/sso/url_slug", Application{"/sso/url_slug"}.Handler)
+	tree.addRoute("/sso/:url_slug", Application{"/sso/:url_slug"}.Handler)
+
+	x, _, _ := tree.getValue("/sso/url_slug", nil)
+	assert.NotNil(t, x)
+	x(nil, nil, nil)
+	x, _, _ = tree.getValue("/sso/maddie", nil)
+	assert.NotNil(t, x)
+	x(nil, nil, nil)
+	tree.Printtree()
+	t.FailNow()
+
+}
+
+type Application struct {
+	s string
+}
+
+func (app Application) Handler(w http.ResponseWriter, r *http.Request, ps Params) {
+	fmt.Println(app.s)
 }
 
 func TestTreeChildConflict(t *testing.T) {
 	routes := []testRoute{
 		{"/cmd/vet", false},
-		{"/cmd/:tool/:sub", true},
+		{"/cmd/:tool", false},
+		{"/cmd/:tool/:sub", false},
+		{"/cmd/:tool/misc", false},
+		{"/cmd/:tool/:othersub", true},
 		{"/src/AUTHORS", false},
 		{"/src/*filepath", true},
 		{"/user_x", false},
-		{"/user_:name", true},
+		{"/user_:name", false},
 		{"/id/:id", false},
-		{"/id:id", true},
-		{"/:id", true},
+		{"/id:id", false},
+		{"/:id", false},
 		{"/*filepath", true},
 	}
 	testRoutes(t, routes)
 }
 
-func TestTreeDupliatePath(t *testing.T) {
+func TestTreeDuplicatePath(t *testing.T) {
 	tree := &node{}
 
 	routes := [...]string{
@@ -669,7 +745,7 @@ func TestTreeWildcardConflictEx(t *testing.T) {
 		{"/who/are/foo/", "/foo/", `/who/are/\*you`, `/\*you`},
 		{"/who/are/foo/bar", "/foo/bar", `/who/are/\*you`, `/\*you`},
 		{"/conxxx", "xxx", `/con:tact`, `:tact`},
-		{"/conooo/xxx", "ooo", `/con:tact`, `:tact`},
+		{"/con:nection", ":nection", `/con:tact`, `:tact`},
 	}
 
 	for i := range conflicts {
@@ -718,4 +794,23 @@ func TestRedirectTrailingSlash(t *testing.T) {
 	if tsr != true {
 		t.Fatalf("want true, is false")
 	}
+}
+
+func (n *node) Printtree() {
+	if n.nType == root {
+		fmt.Printf("[root]path=%s,indices=%s,wildChild=%v,nType=%d,priority=%d\n", n.path, n.indices, n.wildChild, int(n.nType), n.priority)
+	} else {
+		fmt.Printf("\t[child]path=%s,indices=%s,wildChild=%v,nType=%d,priority=%d\n", n.path, n.indices, n.wildChild, int(n.nType), n.priority)
+	}
+	if len(n.children) == 0 {
+		fmt.Println("-----------------")
+		return
+	} else {
+		for _, v := range n.children {
+			if v != nil {
+				v.Printtree()
+			}
+		}
+	}
+	fmt.Println("-----------------")
 }
