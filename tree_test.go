@@ -14,15 +14,15 @@ import (
 	"testing"
 )
 
-func printChildren(n *node, prefix string) {
-	fmt.Printf(" %02d %s%s[%d] %t %d \r\n", n.priority, prefix, n.path, len(n.children), n.wildChild, n.nType)
-	for l := len(n.path); l > 0; l-- {
-		prefix += " "
-	}
-	for _, child := range n.children {
-		printChildren(child, prefix)
-	}
-}
+// func printChildren(n *node, prefix string) {
+// 	fmt.Printf(" %02d %s%s[%d] %t %d \r\n", n.priority, prefix, n.path, len(n.children), n.wildChild, n.nType)
+// 	for l := len(n.path); l > 0; l-- {
+// 		prefix += " "
+// 	}
+// 	for _, child := range n.children {
+// 		printChildren(child, prefix)
+// 	}
+// }
 
 // Used as a workaround since we can't compare functions or their addresses
 var fakeHandlerValue string
@@ -124,9 +124,12 @@ func TestTreeAddAndGet(t *testing.T) {
 	for _, route := range routes {
 		tree.addRoute(route, fakeHandler(route))
 	}
+<<<<<<< HEAD
 	// tree.Printtree()
 	printChildren(tree, "")
 	t.FailNow()
+=======
+>>>>>>> dev
 
 	checkRequests(t, tree, testRequests{
 		{"/a", false, "/a", nil},
@@ -287,10 +290,15 @@ func TestTreeWildcardConflict(t *testing.T) {
 		{"/id/:id", false},
 		{"/sso/url_slug", false},
 		{"/sso/:url_slug", false},
+<<<<<<< HEAD
+=======
+		{"/sso/:url_slug/slo", false},
+>>>>>>> dev
 	}
 	testRoutes(t, routes)
 }
 
+<<<<<<< HEAD
 func TestTHISISMYTESTTest(t *testing.T) {
 	tree := &node{}
 	// tree.addRoute("/sso/url", Application{"/sso/url"}.Handler)
@@ -308,6 +316,8 @@ func TestTHISISMYTESTTest(t *testing.T) {
 	t.FailNow()
 }
 
+=======
+>>>>>>> dev
 type Application struct {
 	s string
 }
@@ -745,7 +755,10 @@ func TestTreeWildcardConflictEx(t *testing.T) {
 		{"/who/are/foo", "/foo", `/who/are/\*you`, `/\*you`},
 		{"/who/are/foo/", "/foo/", `/who/are/\*you`, `/\*you`},
 		{"/who/are/foo/bar", "/foo/bar", `/who/are/\*you`, `/\*you`},
+<<<<<<< HEAD
 		{"/conxxx", "xxx", `/con:tact`, `:tact`},
+=======
+>>>>>>> dev
 		{"/con:nection", ":nection", `/con:tact`, `:tact`},
 	}
 
