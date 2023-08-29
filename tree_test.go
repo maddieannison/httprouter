@@ -12,19 +12,17 @@ import (
 	"runtime"
 	"strings"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
-// func printChildren(n *node, prefix string) {
-// 	fmt.Printf(" %02d %s%s[%d] %v %t %d \r\n", n.priority, prefix, n.path, len(n.children), n.handle, n.wildChild, n.nType)
-// 	for l := len(n.path); l > 0; l-- {
-// 		prefix += " "
-// 	}
-// 	for _, child := range n.children {
-// 		printChildren(child, prefix)
-// 	}
-// }
+func printChildren(n *node, prefix string) {
+	fmt.Printf(" %02d %s%s[%d] %t %d \r\n", n.priority, prefix, n.path, len(n.children), n.wildChild, n.nType)
+	for l := len(n.path); l > 0; l-- {
+		prefix += " "
+	}
+	for _, child := range n.children {
+		printChildren(child, prefix)
+	}
+}
 
 // Used as a workaround since we can't compare functions or their addresses
 var fakeHandlerValue string
@@ -120,12 +118,15 @@ func TestTreeAddAndGet(t *testing.T) {
 		"/doc/go1.html",
 		"/α",
 		"/β",
+		"/sso/url_slug",
+		"/sso/:url_slug",
 	}
 	for _, route := range routes {
 		tree.addRoute(route, fakeHandler(route))
 	}
-
-	// printChildren(tree, "")
+	// tree.Printtree()
+	printChildren(tree, "")
+	t.FailNow()
 
 	checkRequests(t, tree, testRequests{
 		{"/a", false, "/a", nil},
@@ -166,6 +167,9 @@ func TestTreeWildcard(t *testing.T) {
 	for _, route := range routes {
 		tree.addRoute(route, fakeHandler(route))
 	}
+
+	// tree.Printtree()
+	// t.FailNow()
 
 	// printChildren(tree, "")
 
@@ -287,24 +291,21 @@ func TestTreeWildcardConflict(t *testing.T) {
 	testRoutes(t, routes)
 }
 
-func TestTest(t *testing.T) {
-	// routes := []testRoute{
-	// 	{"/sso/url_slug", false},
-	// 	{"/sso/:url_slug", false},
-	// }
+func TestTHISISMYTESTTest(t *testing.T) {
 	tree := &node{}
+	// tree.addRoute("/sso/url", Application{"/sso/url"}.Handler)
 	tree.addRoute("/sso/url_slug", Application{"/sso/url_slug"}.Handler)
 	tree.addRoute("/sso/:url_slug", Application{"/sso/:url_slug"}.Handler)
+	tree.addRoute("/sso/:url_slug/slo", Application{"/sso/:url_slug"}.Handler)
 
-	x, _, _ := tree.getValue("/sso/url_slug", nil)
-	assert.NotNil(t, x)
-	x(nil, nil, nil)
-	x, _, _ = tree.getValue("/sso/maddie", nil)
-	assert.NotNil(t, x)
-	x(nil, nil, nil)
+	// x, _, _ := tree.getValue("/sso/url_slug", nil)
+	// assert.NotNil(t, x)
+	// x(nil, nil, nil)
+	// x, _, _ = tree.getValue("/sso/maddie", nil)
+	// assert.NotNil(t, x)
+	// x(nil, nil, nil)
 	tree.Printtree()
 	t.FailNow()
-
 }
 
 type Application struct {
@@ -798,9 +799,9 @@ func TestRedirectTrailingSlash(t *testing.T) {
 
 func (n *node) Printtree() {
 	if n.nType == root {
-		fmt.Printf("[root]path=%s,indices=%s,wildChild=%v,nType=%d,priority=%d\n", n.path, n.indices, n.wildChild, int(n.nType), n.priority)
+		fmt.Printf("[root]path=%s,indices=%+v,wildChild=%v,nType=%d,priority=%d\n", n.path, n.indices, n.wildChild, int(n.nType), n.priority)
 	} else {
-		fmt.Printf("\t[child]path=%s,indices=%s,wildChild=%v,nType=%d,priority=%d\n", n.path, n.indices, n.wildChild, int(n.nType), n.priority)
+		fmt.Printf("\t[child]path=%s,indices=%+v,wildChild=%v,nType=%d,priority=%d\n", n.path, n.indices, n.wildChild, int(n.nType), n.priority)
 	}
 	if len(n.children) == 0 {
 		fmt.Println("-----------------")
