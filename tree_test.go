@@ -124,12 +124,6 @@ func TestTreeAddAndGet(t *testing.T) {
 	for _, route := range routes {
 		tree.addRoute(route, fakeHandler(route))
 	}
-<<<<<<< HEAD
-	// tree.Printtree()
-	printChildren(tree, "")
-	t.FailNow()
-=======
->>>>>>> dev
 
 	checkRequests(t, tree, testRequests{
 		{"/a", false, "/a", nil},
@@ -290,34 +284,11 @@ func TestTreeWildcardConflict(t *testing.T) {
 		{"/id/:id", false},
 		{"/sso/url_slug", false},
 		{"/sso/:url_slug", false},
-<<<<<<< HEAD
-=======
 		{"/sso/:url_slug/slo", false},
->>>>>>> dev
 	}
 	testRoutes(t, routes)
 }
 
-<<<<<<< HEAD
-func TestTHISISMYTESTTest(t *testing.T) {
-	tree := &node{}
-	// tree.addRoute("/sso/url", Application{"/sso/url"}.Handler)
-	tree.addRoute("/sso/url_slug", Application{"/sso/url_slug"}.Handler)
-	tree.addRoute("/sso/:url_slug", Application{"/sso/:url_slug"}.Handler)
-	tree.addRoute("/sso/:url_slug/slo", Application{"/sso/:url_slug"}.Handler)
-
-	// x, _, _ := tree.getValue("/sso/url_slug", nil)
-	// assert.NotNil(t, x)
-	// x(nil, nil, nil)
-	// x, _, _ = tree.getValue("/sso/maddie", nil)
-	// assert.NotNil(t, x)
-	// x(nil, nil, nil)
-	tree.Printtree()
-	t.FailNow()
-}
-
-=======
->>>>>>> dev
 type Application struct {
 	s string
 }
@@ -755,10 +726,6 @@ func TestTreeWildcardConflictEx(t *testing.T) {
 		{"/who/are/foo", "/foo", `/who/are/\*you`, `/\*you`},
 		{"/who/are/foo/", "/foo/", `/who/are/\*you`, `/\*you`},
 		{"/who/are/foo/bar", "/foo/bar", `/who/are/\*you`, `/\*you`},
-<<<<<<< HEAD
-		{"/conxxx", "xxx", `/con:tact`, `:tact`},
-=======
->>>>>>> dev
 		{"/con:nection", ":nection", `/con:tact`, `:tact`},
 	}
 
